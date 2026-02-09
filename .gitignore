@@ -46,6 +46,16 @@ Thumbs.db
 # playwright-cli
 .playwright-cli/
 
+# Cursor/Claude local files (do not commit)
+.agent.lock
+.claude_mcp.json
+.claude_settings.json
+claude-progress.txt
+features.db
+
+# Playwright MCP artifacts (screenshots/logs)
+.playwright-mcp/
+
 # Terraform
 *.tfstate
 *.tfstate.*
