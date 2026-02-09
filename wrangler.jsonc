@@ -32,6 +32,9 @@
   "build": {
     "command": "npm run build",
   },
+  "dev": {
+    "enable_containers": false,
+  },
   // Container configuration for the Moltbot sandbox
   "containers": [
     {

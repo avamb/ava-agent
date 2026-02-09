@@ -46,6 +46,16 @@ Thumbs.db
 # playwright-cli
 .playwright-cli/
 
+# Cursor/Claude local files (do not commit)
+.agent.lock
+.claude_mcp.json
+.claude_settings.json
+claude-progress.txt
+features.db
+
+# Playwright MCP artifacts (screenshots/logs)
+.playwright-mcp/
+
 # Terraform
 *.tfstate
 *.tfstate.*
@@ -58,3 +68,6 @@ test/e2e/.dev.vars
 
 # Temporary e2e wrangler configs
 .wrangler-e2e-*.jsonc
+
+# Local/private deployment notes
+DEPLOY_STEP_BY_STEP_RU.md
