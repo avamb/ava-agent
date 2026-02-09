@@ -104,13 +104,13 @@ describe('API admin routes', () => {
       const proc = createMockProc({ stdout: devicesJson });
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(proc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices', {}, { MOLTBOT_GATEWAY_TOKEN: 'token-123' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.pending).toHaveLength(1);
       expect(body.paired).toHaveLength(1);
       expect(body.pending[0].requestId).toBe('req-1');
@@ -120,13 +120,13 @@ describe('API admin routes', () => {
       const proc = createMockProc({ stdout: 'No devices found\n' });
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(proc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices', {}, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.pending).toEqual([]);
       expect(body.paired).toEqual([]);
       expect(body.raw).toBe('No devices found\n');
@@ -140,7 +140,7 @@ describe('API admin routes', () => {
       const res = await testApp.request('/api/admin/devices', {}, {});
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toContain('Gateway OOM');
     });
 
@@ -148,7 +148,7 @@ describe('API admin routes', () => {
       const proc = createMockProc({ stdout: '{}' });
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(proc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       await testApp.request('/api/admin/devices', {}, { MOLTBOT_GATEWAY_TOKEN: 'my-token' });
@@ -165,7 +165,7 @@ describe('API admin routes', () => {
       const proc = createMockProc({ stdout: 'Approved device req-42', exitCode: 0 });
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(proc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices/req-42/approve', {
@@ -173,7 +173,7 @@ describe('API admin routes', () => {
       }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.success).toBe(true);
       expect(body.requestId).toBe('req-42');
       expect(body.message).toBe('Device approved');
@@ -183,7 +183,7 @@ describe('API admin routes', () => {
       const proc = createMockProc({ stdout: 'Error: device not found', exitCode: 1 });
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(proc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices/req-99/approve', {
@@ -191,7 +191,7 @@ describe('API admin routes', () => {
       }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       // exitCode 0 counts as success even with unexpected output
       // exitCode 1 + no "approved" text → success is false
       expect(body.success).toBe(false);
@@ -226,7 +226,7 @@ describe('API admin routes', () => {
         .mockResolvedValueOnce(listProc)
         .mockResolvedValueOnce(approveProc1)
         .mockResolvedValueOnce(approveProc2);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices/approve-all', {
@@ -234,7 +234,7 @@ describe('API admin routes', () => {
       }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.approved).toEqual(['req-1', 'req-2']);
       expect(body.message).toContain('Approved 2 of 2');
     });
@@ -245,7 +245,7 @@ describe('API admin routes', () => {
 
       const sandbox = createMockSandbox();
       sandbox.startProcess.mockResolvedValue(listProc);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
       const res = await testApp.request('/api/admin/devices/approve-all', {
@@ -253,7 +253,7 @@ describe('API admin routes', () => {
       }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.message).toContain('No pending devices');
     });
   });
@@ -266,7 +266,7 @@ describe('API admin routes', () => {
       const res = await testApp.request('/api/admin/storage', {}, {});
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.configured).toBe(false);
       expect(body.missing).toContain('R2_ACCESS_KEY_ID');
       expect(body.missing).toContain('R2_SECRET_ACCESS_KEY');
@@ -286,7 +286,7 @@ describe('API admin routes', () => {
       });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.configured).toBe(true);
       expect(body.missing).toBeUndefined();
     });
@@ -307,7 +307,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.success).toBe(true);
       expect(body.lastSync).toBe('2025-01-01T00:00:00Z');
     });
@@ -325,7 +325,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(400);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.success).toBe(false);
       expect(body.error).toContain('not configured');
     });
@@ -344,7 +344,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toBe('Sync failed');
       expect(body.details).toBe('Mount error');
     });
@@ -355,7 +355,7 @@ describe('API admin routes', () => {
     it('kills existing process and starts new one', async () => {
       const existingProc = createMockProc({ status: 'running' });
       vi.mocked(findExistingMoltbotProcess).mockResolvedValue(existingProc as any);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const sandbox = createMockSandbox();
       const testApp = new Hono<AppEnv>();
@@ -374,7 +374,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.success).toBe(true);
       expect(body.message).toContain('killed');
       expect(existingProc.kill).toHaveBeenCalled();
@@ -382,7 +382,7 @@ describe('API admin routes', () => {
 
     it('starts new instance when no existing process', async () => {
       vi.mocked(findExistingMoltbotProcess).mockResolvedValue(null);
-      vi.mocked(ensureMoltbotGateway).mockResolvedValue(undefined);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const sandbox = createMockSandbox();
       const testApp = new Hono<AppEnv>();
@@ -400,7 +400,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.success).toBe(true);
       expect(body.message).toContain('No existing process');
     });
@@ -424,7 +424,7 @@ describe('API admin routes', () => {
       }, {});
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toContain('Sandbox unavailable');
     });
   });

@@ -52,7 +52,7 @@ describe('Route protection matrix', () => {
     it('GET /sandbox-health is accessible without auth', async () => {
       const res = await app.request('/sandbox-health');
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('ok');
       expect(body.service).toBe('moltbot-sandbox');
     });
@@ -60,7 +60,7 @@ describe('Route protection matrix', () => {
     it('GET /api/status is accessible without auth', async () => {
       const res = await app.request('/api/status');
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('ok');
       expect(body).toHaveProperty('status');
     });
@@ -96,7 +96,7 @@ describe('Route protection matrix', () => {
       // Pass empty env so c.env is defined but CDP_SECRET is missing → 503
       const res = await app.request('/cdp/json/version', {}, {});
       expect(res.status).toBe(503);
-      const body = await res.json();
+      const body: any = await res.json();
       // The error is about CDP config, not about CF Access authentication
       expect(body.error).toBe('CDP endpoint not configured');
     });
@@ -151,7 +151,7 @@ describe('Route protection matrix', () => {
         DEBUG_ROUTES: 'false',
       });
       expect(res.status).toBe(404);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toBe('Debug routes are disabled');
     });
   });

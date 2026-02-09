@@ -13,7 +13,6 @@ import type { AppEnv } from '../types';
  * We mock the sandbox and test response formats and error handling.
  */
 describe('debug routes', () => {
-  let app: Hono<AppEnv>;
 
   // Mock process object
   function createMockProc(opts: {
@@ -56,9 +55,6 @@ describe('debug routes', () => {
     // Suppress console output during tests
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    app = new Hono<AppEnv>();
-    // We need middleware to set the sandbox variable
   });
 
   // ── Helper to build a test app with a given sandbox mock ──────────
@@ -88,7 +84,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/version');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('moltbot_version', 'openclaw v2026.2.3');
       expect(body).toHaveProperty('node_version', 'v22.0.0');
     });
@@ -105,7 +101,7 @@ describe('debug routes', () => {
 
       const testApp = buildApp(sandbox);
       const res = await testApp.request('/debug/version');
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.moltbot_version).toBe('openclaw v2026.2.3');
       expect(body.node_version).toBe('v22.0.0');
     });
@@ -122,7 +118,7 @@ describe('debug routes', () => {
 
       const testApp = buildApp(sandbox);
       const res = await testApp.request('/debug/version');
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.moltbot_version).toBe('openclaw v2026.2.3');
     });
 
@@ -135,7 +131,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/version');
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('error');
       expect(body.message).toContain('Container unavailable');
     });
@@ -150,7 +146,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/processes');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('count', 0);
       expect(body).toHaveProperty('processes');
       expect(body.processes).toEqual([]);
@@ -172,7 +168,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/processes');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.count).toBe(1);
       expect(body.processes[0]).toHaveProperty('id', 'proc-123');
       expect(body.processes[0]).toHaveProperty('command', 'openclaw gateway start');
@@ -196,7 +192,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/processes?logs=true');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.processes[0]).toHaveProperty('stdout', 'Starting gateway...');
       expect(body.processes[0]).toHaveProperty('stderr', 'Warning: something');
     });
@@ -212,7 +208,7 @@ describe('debug routes', () => {
 
       const testApp = buildApp(sandbox);
       const res = await testApp.request('/debug/processes');
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.processes[0].id).toBe('running');
       expect(body.processes[1].id).toBe('completed');
       expect(body.processes[2].id).toBe('failed');
@@ -227,7 +223,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/processes');
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toContain('Connection lost');
     });
   });
@@ -251,7 +247,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('ok');
       expect(body.process_id).toBe('gw-1');
       expect(body.stdout).toBe('Gateway started');
@@ -266,7 +262,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('no_process');
       expect(body.stdout).toBe('');
       expect(body.stderr).toBe('');
@@ -286,7 +282,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs?id=specific-proc');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.process_id).toBe('specific-proc');
       expect(body.stdout).toBe('Specific output');
     });
@@ -300,7 +296,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs?id=nonexistent');
       expect(res.status).toBe(404);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('not_found');
     });
 
@@ -314,7 +310,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('no_process');
     });
 
@@ -330,7 +326,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/logs?id=err-proc');
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.status).toBe('error');
       expect(body.message).toContain('Log retrieval failed');
     });
@@ -355,7 +351,7 @@ describe('debug routes', () => {
       });
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       // Should show boolean flags, not actual secret values
       expect(body.has_anthropic_key).toBe(true);
       expect(body.has_gateway_token).toBe(true);
@@ -378,7 +374,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/env', {}, {});
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.has_anthropic_key).toBe(false);
       expect(body.has_openai_key).toBe(false);
       expect(body.has_gateway_token).toBe(false);
@@ -403,7 +399,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/container-config');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.config).toEqual({ version: '2026.2', bind: 'lan' });
       expect(body.status).toBe('completed');
       expect(body.exitCode).toBe(0);
@@ -426,7 +422,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/container-config');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.config).toBeNull();
       expect(body.raw).toBe('Not a JSON file');
     });
@@ -447,7 +443,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/container-config');
       expect(res.status).toBe(200);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.stderr).toContain('No such file or directory');
     });
 
@@ -460,7 +456,7 @@ describe('debug routes', () => {
       const res = await testApp.request('/debug/container-config');
       expect(res.status).toBe(500);
 
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toContain('Process start failed');
     });
   });

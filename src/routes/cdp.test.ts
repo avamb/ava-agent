@@ -33,7 +33,7 @@ describe('CDP routes', () => {
     it('returns 503 when CDP_SECRET is not set', async () => {
       const res = await app.request('/cdp/json/version', {}, {});
       expect(res.status).toBe(503);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toBe('CDP endpoint not configured');
       expect(body.hint).toContain('CDP_SECRET');
     });
@@ -41,7 +41,7 @@ describe('CDP routes', () => {
     it('returns 401 when secret query param is missing', async () => {
       const res = await app.request('/cdp/json/version', {}, validEnv);
       expect(res.status).toBe(401);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toBe('Unauthorized');
     });
 
@@ -55,7 +55,7 @@ describe('CDP routes', () => {
         CDP_SECRET: 'test-secret',
       });
       expect(res.status).toBe(503);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body.error).toBe('Browser Rendering not configured');
     });
 
@@ -66,7 +66,7 @@ describe('CDP routes', () => {
         validEnv,
       );
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('Browser');
       expect(body).toHaveProperty('Protocol-Version', '1.3');
       expect(body).toHaveProperty('webSocketDebuggerUrl');
@@ -105,7 +105,7 @@ describe('CDP routes', () => {
         validEnv,
       );
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBeGreaterThan(0);
       expect(body[0]).toHaveProperty('id');
@@ -145,7 +145,7 @@ describe('CDP routes', () => {
         validEnv,
       );
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('id');
       expect(body).toHaveProperty('type', 'page');
       expect(body).toHaveProperty('title', 'New Tab');
@@ -156,8 +156,8 @@ describe('CDP routes', () => {
     it('generates unique target IDs', async () => {
       const res1 = await app.request('/cdp/json/new?secret=test-secret', {}, validEnv);
       const res2 = await app.request('/cdp/json/new?secret=test-secret', {}, validEnv);
-      const body1 = await res1.json();
-      const body2 = await res2.json();
+      const body1: any = await res1.json();
+      const body2: any = await res2.json();
       expect(body1.id).not.toBe(body2.id);
     });
   });
@@ -177,7 +177,7 @@ describe('CDP routes', () => {
     it('returns 200 with array of targets on success (same as /json/list)', async () => {
       const res = await app.request('/cdp/json?secret=test-secret', {}, validEnv);
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBeGreaterThan(0);
       expect(body[0]).toHaveProperty('id');
@@ -190,7 +190,7 @@ describe('CDP routes', () => {
       // Without Upgrade header, the endpoint returns info JSON and does NOT check auth
       const res = await app.request('/cdp', {}, {});
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('supported_methods');
       expect(Array.isArray(body.supported_methods)).toBe(true);
       expect(body.supported_methods).toContain('Browser.getVersion');
@@ -199,7 +199,7 @@ describe('CDP routes', () => {
 
     it('returns hint about WebSocket connection', async () => {
       const res = await app.request('/cdp', {}, {});
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('hint');
       expect(body.hint).toContain('WebSocket');
     });
@@ -211,14 +211,14 @@ describe('CDP routes', () => {
       // Without Upgrade header, the alias returns a JSON error and does NOT check auth
       const res = await app.request('/cdp/devtools/browser/some-id', {}, {});
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('error');
       expect(body.error).toContain('WebSocket upgrade required');
     });
 
     it('includes hint about connection', async () => {
       const res = await app.request('/cdp/devtools/browser/some-id', {}, {});
-      const body = await res.json();
+      const body: any = await res.json();
       expect(body).toHaveProperty('hint');
       expect(body.hint).toContain('devtools/browser');
     });
