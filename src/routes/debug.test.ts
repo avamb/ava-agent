@@ -13,18 +13,19 @@ import type { AppEnv } from '../types';
  * We mock the sandbox and test response formats and error handling.
  */
 describe('debug routes', () => {
-
   // Mock process object
-  function createMockProc(opts: {
-    stdout?: string;
-    stderr?: string;
-    status?: string;
-    exitCode?: number;
-    id?: string;
-    command?: string;
-    startTime?: Date;
-    endTime?: Date;
-  } = {}) {
+  function createMockProc(
+    opts: {
+      stdout?: string;
+      stderr?: string;
+      status?: string;
+      exitCode?: number;
+      id?: string;
+      command?: string;
+      startTime?: Date;
+      endTime?: Date;
+    } = {},
+  ) {
     return {
       id: opts.id ?? 'proc-1',
       command: opts.command ?? 'test-cmd',
@@ -75,9 +76,7 @@ describe('debug routes', () => {
       const nodeProc = createMockProc({ stdout: 'v22.0.0' });
 
       const sandbox = createMockSandbox({
-        startProcess: vi.fn()
-          .mockResolvedValueOnce(versionProc)
-          .mockResolvedValueOnce(nodeProc),
+        startProcess: vi.fn().mockResolvedValueOnce(versionProc).mockResolvedValueOnce(nodeProc),
       });
 
       const testApp = buildApp(sandbox);
@@ -94,9 +93,7 @@ describe('debug routes', () => {
       const nodeProc = createMockProc({ stdout: '  v22.0.0\n' });
 
       const sandbox = createMockSandbox({
-        startProcess: vi.fn()
-          .mockResolvedValueOnce(versionProc)
-          .mockResolvedValueOnce(nodeProc),
+        startProcess: vi.fn().mockResolvedValueOnce(versionProc).mockResolvedValueOnce(nodeProc),
       });
 
       const testApp = buildApp(sandbox);
@@ -111,9 +108,7 @@ describe('debug routes', () => {
       const nodeProc = createMockProc({ stdout: 'v22.0.0' });
 
       const sandbox = createMockSandbox({
-        startProcess: vi.fn()
-          .mockResolvedValueOnce(versionProc)
-          .mockResolvedValueOnce(nodeProc),
+        startProcess: vi.fn().mockResolvedValueOnce(versionProc).mockResolvedValueOnce(nodeProc),
       });
 
       const testApp = buildApp(sandbox);
@@ -343,12 +338,16 @@ describe('debug routes', () => {
       });
       testApp.route('/debug', debug);
 
-      const res = await testApp.request('/debug/env', {}, {
-        ANTHROPIC_API_KEY: 'sk-secret-key',
-        MOLTBOT_GATEWAY_TOKEN: 'token-123',
-        DEV_MODE: 'true',
-        DEBUG_ROUTES: 'true',
-      });
+      const res = await testApp.request(
+        '/debug/env',
+        {},
+        {
+          ANTHROPIC_API_KEY: 'sk-secret-key',
+          MOLTBOT_GATEWAY_TOKEN: 'token-123',
+          DEV_MODE: 'true',
+          DEBUG_ROUTES: 'true',
+        },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();

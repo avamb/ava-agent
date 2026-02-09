@@ -67,17 +67,25 @@ describe('Route protection matrix', () => {
 
     it('GET /logo.png requires ASSETS binding but no auth', async () => {
       const mockFetch = vi.fn().mockResolvedValue(new Response('image-data'));
-      const res = await app.request('/logo.png', {}, {
-        ASSETS: { fetch: mockFetch } as any,
-      });
+      const res = await app.request(
+        '/logo.png',
+        {},
+        {
+          ASSETS: { fetch: mockFetch } as any,
+        },
+      );
       expect(res.status).toBe(200);
     });
 
     it('GET /_admin/assets/test.css requires ASSETS binding but no auth', async () => {
       const mockFetch = vi.fn().mockResolvedValue(new Response('.body {}'));
-      const res = await app.request('/_admin/assets/test.css', {}, {
-        ASSETS: { fetch: mockFetch } as any,
-      });
+      const res = await app.request(
+        '/_admin/assets/test.css',
+        {},
+        {
+          ASSETS: { fetch: mockFetch } as any,
+        },
+      );
       expect(res.status).toBe(200);
     });
   });
@@ -102,10 +110,14 @@ describe('Route protection matrix', () => {
     });
 
     it('CDP routes accept valid secret', async () => {
-      const res = await app.request('/cdp/json/version?secret=test', {}, {
-        CDP_SECRET: 'test',
-        BROWSER: {} as any,
-      });
+      const res = await app.request(
+        '/cdp/json/version?secret=test',
+        {},
+        {
+          CDP_SECRET: 'test',
+          BROWSER: {} as any,
+        },
+      );
       expect(res.status).toBe(200);
     });
   });
@@ -126,10 +138,14 @@ describe('Route protection matrix', () => {
       });
       app.route('/debug', debug);
 
-      const res = await app.request('/debug/env', {}, {
-        DEBUG_ROUTES: 'true',
-        DEV_MODE: 'false',
-      });
+      const res = await app.request(
+        '/debug/env',
+        {},
+        {
+          DEBUG_ROUTES: 'true',
+          DEV_MODE: 'false',
+        },
+      );
       expect(res.status).toBe(200);
     });
 
@@ -147,9 +163,13 @@ describe('Route protection matrix', () => {
       });
       app.route('/debug', debug);
 
-      const res = await app.request('/debug/env', {}, {
-        DEBUG_ROUTES: 'false',
-      });
+      const res = await app.request(
+        '/debug/env',
+        {},
+        {
+          DEBUG_ROUTES: 'false',
+        },
+      );
       expect(res.status).toBe(404);
       const body: any = await res.json();
       expect(body.error).toBe('Debug routes are disabled');

@@ -38,12 +38,14 @@ describe('API admin routes', () => {
   let app: Hono<AppEnv>;
 
   // Mock process helper
-  function createMockProc(opts: {
-    stdout?: string;
-    stderr?: string;
-    exitCode?: number;
-    status?: string;
-  } = {}) {
+  function createMockProc(
+    opts: {
+      stdout?: string;
+      stderr?: string;
+      exitCode?: number;
+      status?: string;
+    } = {},
+  ) {
     return {
       id: 'proc-1',
       status: opts.status ?? 'completed',
@@ -84,7 +86,10 @@ describe('API admin routes', () => {
   });
 
   // Helper: build app with specific sandbox
-  function buildApp(sandbox: ReturnType<typeof createMockSandbox>, envOverrides: Record<string, any> = {}) {
+  function buildApp(
+    sandbox: ReturnType<typeof createMockSandbox>,
+    envOverrides: Record<string, any> = {},
+  ) {
     const testApp = new Hono<AppEnv>();
     testApp.use('*', async (c, next) => {
       c.set('sandbox', sandbox as any);
@@ -107,7 +112,11 @@ describe('API admin routes', () => {
       vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices', {}, { MOLTBOT_GATEWAY_TOKEN: 'token-123' });
+      const res = await testApp.request(
+        '/api/admin/devices',
+        {},
+        { MOLTBOT_GATEWAY_TOKEN: 'token-123' },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -168,9 +177,13 @@ describe('API admin routes', () => {
       vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices/req-42/approve', {
-        method: 'POST',
-      }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
+      const res = await testApp.request(
+        '/api/admin/devices/req-42/approve',
+        {
+          method: 'POST',
+        },
+        { MOLTBOT_GATEWAY_TOKEN: 'tok' },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -186,9 +199,13 @@ describe('API admin routes', () => {
       vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices/req-99/approve', {
-        method: 'POST',
-      }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
+      const res = await testApp.request(
+        '/api/admin/devices/req-99/approve',
+        {
+          method: 'POST',
+        },
+        { MOLTBOT_GATEWAY_TOKEN: 'tok' },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -203,9 +220,13 @@ describe('API admin routes', () => {
 
       const sandbox = createMockSandbox();
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices/req-1/approve', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/devices/req-1/approve',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(500);
     });
   });
@@ -229,9 +250,13 @@ describe('API admin routes', () => {
       vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices/approve-all', {
-        method: 'POST',
-      }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
+      const res = await testApp.request(
+        '/api/admin/devices/approve-all',
+        {
+          method: 'POST',
+        },
+        { MOLTBOT_GATEWAY_TOKEN: 'tok' },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -248,9 +273,13 @@ describe('API admin routes', () => {
       vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/devices/approve-all', {
-        method: 'POST',
-      }, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
+      const res = await testApp.request(
+        '/api/admin/devices/approve-all',
+        {
+          method: 'POST',
+        },
+        { MOLTBOT_GATEWAY_TOKEN: 'tok' },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -279,11 +308,15 @@ describe('API admin routes', () => {
       sandbox.startProcess.mockResolvedValue(proc);
 
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/storage', {}, {
-        R2_ACCESS_KEY_ID: 'key',
-        R2_SECRET_ACCESS_KEY: 'secret',
-        CF_ACCOUNT_ID: 'account',
-      });
+      const res = await testApp.request(
+        '/api/admin/storage',
+        {},
+        {
+          R2_ACCESS_KEY_ID: 'key',
+          R2_SECRET_ACCESS_KEY: 'secret',
+          CF_ACCOUNT_ID: 'account',
+        },
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -302,9 +335,13 @@ describe('API admin routes', () => {
 
       const sandbox = createMockSandbox();
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/storage/sync', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/storage/sync',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -320,9 +357,13 @@ describe('API admin routes', () => {
 
       const sandbox = createMockSandbox();
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/storage/sync', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/storage/sync',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(400);
 
       const body: any = await res.json();
@@ -339,9 +380,13 @@ describe('API admin routes', () => {
 
       const sandbox = createMockSandbox();
       const { testApp } = buildApp(sandbox);
-      const res = await testApp.request('/api/admin/storage/sync', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/storage/sync',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(500);
 
       const body: any = await res.json();
@@ -369,9 +414,13 @@ describe('API admin routes', () => {
       });
       testApp.route('/api', api);
 
-      const res = await testApp.request('/api/admin/gateway/restart', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/gateway/restart',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -395,9 +444,13 @@ describe('API admin routes', () => {
       });
       testApp.route('/api', api);
 
-      const res = await testApp.request('/api/admin/gateway/restart', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/gateway/restart',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(200);
 
       const body: any = await res.json();
@@ -419,9 +472,13 @@ describe('API admin routes', () => {
       });
       testApp.route('/api', api);
 
-      const res = await testApp.request('/api/admin/gateway/restart', {
-        method: 'POST',
-      }, {});
+      const res = await testApp.request(
+        '/api/admin/gateway/restart',
+        {
+          method: 'POST',
+        },
+        {},
+      );
       expect(res.status).toBe(500);
 
       const body: any = await res.json();

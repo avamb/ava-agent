@@ -51,20 +51,20 @@ describe('CDP routes', () => {
     });
 
     it('returns 503 when BROWSER binding is missing', async () => {
-      const res = await app.request('/cdp/json/version?secret=test-secret', {}, {
-        CDP_SECRET: 'test-secret',
-      });
+      const res = await app.request(
+        '/cdp/json/version?secret=test-secret',
+        {},
+        {
+          CDP_SECRET: 'test-secret',
+        },
+      );
       expect(res.status).toBe(503);
       const body: any = await res.json();
       expect(body.error).toBe('Browser Rendering not configured');
     });
 
     it('returns 200 with version info on success', async () => {
-      const res = await app.request(
-        '/cdp/json/version?secret=test-secret',
-        {},
-        validEnv,
-      );
+      const res = await app.request('/cdp/json/version?secret=test-secret', {}, validEnv);
       expect(res.status).toBe(200);
       const body: any = await res.json();
       expect(body).toHaveProperty('Browser');
@@ -92,18 +92,18 @@ describe('CDP routes', () => {
     });
 
     it('returns 503 when BROWSER binding is missing', async () => {
-      const res = await app.request('/cdp/json/list?secret=test-secret', {}, {
-        CDP_SECRET: 'test-secret',
-      });
+      const res = await app.request(
+        '/cdp/json/list?secret=test-secret',
+        {},
+        {
+          CDP_SECRET: 'test-secret',
+        },
+      );
       expect(res.status).toBe(503);
     });
 
     it('returns 200 with array of targets on success', async () => {
-      const res = await app.request(
-        '/cdp/json/list?secret=test-secret',
-        {},
-        validEnv,
-      );
+      const res = await app.request('/cdp/json/list?secret=test-secret', {}, validEnv);
       expect(res.status).toBe(200);
       const body: any = await res.json();
       expect(Array.isArray(body)).toBe(true);
@@ -132,18 +132,18 @@ describe('CDP routes', () => {
     });
 
     it('returns 503 when BROWSER binding is missing', async () => {
-      const res = await app.request('/cdp/json/new?secret=test-secret', {}, {
-        CDP_SECRET: 'test-secret',
-      });
+      const res = await app.request(
+        '/cdp/json/new?secret=test-secret',
+        {},
+        {
+          CDP_SECRET: 'test-secret',
+        },
+      );
       expect(res.status).toBe(503);
     });
 
     it('returns 200 with new target info on success', async () => {
-      const res = await app.request(
-        '/cdp/json/new?secret=test-secret',
-        {},
-        validEnv,
-      );
+      const res = await app.request('/cdp/json/new?secret=test-secret', {}, validEnv);
       expect(res.status).toBe(200);
       const body: any = await res.json();
       expect(body).toHaveProperty('id');
@@ -227,10 +227,14 @@ describe('CDP routes', () => {
   // ── Auth edge cases ────────────────────────────────────────────────
   describe('auth edge cases', () => {
     it('rejects secrets of different length (timing-safe check)', async () => {
-      const res = await app.request('/cdp/json/version?secret=short', {}, {
-        CDP_SECRET: 'much-longer-secret-value',
-        BROWSER: {} as unknown,
-      });
+      const res = await app.request(
+        '/cdp/json/version?secret=short',
+        {},
+        {
+          CDP_SECRET: 'much-longer-secret-value',
+          BROWSER: {} as unknown,
+        },
+      );
       expect(res.status).toBe(401);
     });
 

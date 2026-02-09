@@ -1,6 +1,48 @@
 import type { MoltbotEnv } from '../types';
 
 /**
+ * Auth choices used by `openclaw onboard` in start-openclaw.sh.
+ * Mirrors the if/elif/elif priority chain in the startup script.
+ */
+export type AuthChoice = 'cloudflare-ai-gateway-api-key' | 'apiKey' | 'openai-api-key' | 'none';
+
+/**
+ * Resolve the auth choice that start-openclaw.sh would use for `openclaw onboard`.
+ *
+ * Priority (matches start-openclaw.sh exactly):
+ *   1. CF AI Gateway (all three vars present)
+ *   2. Anthropic direct key
+ *   3. OpenAI direct key
+ *   4. 'none' (no provider configured)
+ *
+ * When legacy AI_GATEWAY_* vars are set, buildEnvVars() remaps them into
+ * ANTHROPIC_API_KEY + ANTHROPIC_BASE_URL before the container starts, so
+ * the startup script sees an Anthropic key and picks 'apiKey'.
+ */
+export function resolveStartupAuthChoice(env: MoltbotEnv): AuthChoice {
+  // 1. Cloudflare AI Gateway (requires all three vars)
+  if (
+    env.CLOUDFLARE_AI_GATEWAY_API_KEY &&
+    env.CF_AI_GATEWAY_ACCOUNT_ID &&
+    env.CF_AI_GATEWAY_GATEWAY_ID
+  ) {
+    return 'cloudflare-ai-gateway-api-key';
+  }
+
+  // 2. Anthropic direct key (or legacy gateway which sets ANTHROPIC_API_KEY via buildEnvVars)
+  if (env.ANTHROPIC_API_KEY) {
+    return 'apiKey';
+  }
+
+  // 3. OpenAI direct key
+  if (env.OPENAI_API_KEY) {
+    return 'openai-api-key';
+  }
+
+  return 'none';
+}
+
+/**
  * Build environment variables to pass to the OpenClaw container process
  *
  * @param env - Worker environment bindings

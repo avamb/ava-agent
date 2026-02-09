@@ -2,7 +2,7 @@
 
 Traceability matrix mapping requirements to implementation, tests, and status.
 
-Last updated: 2025-07-17
+Last updated: 2026-02-09
 
 ## Legend
 
@@ -70,7 +70,7 @@ Last updated: 2025-07-17
 | GW-01 | AI provider priority: CF Gateway > Anthropic > OpenAI > legacy | AGENTS.md | `src/gateway/env.ts` | `env.test.ts` | PASS | — |
 | GW-02 | Gateway process lifecycle (find, start, wait) | AGENTS.md | `src/gateway/process.ts` | `process.test.ts` | PASS | — |
 | GW-03 | R2 storage mount and sync | AGENTS.md | `src/gateway/r2.ts`, `src/gateway/sync.ts` | `r2.test.ts`, `sync.test.ts` | PASS | — |
-| GW-04 | Structured logging with log levels | AGENTS.md | `src/logging.ts` | `logging.test.ts` | PASS | — |
+| GW-04 | Structured logging with log levels | AGENTS.md | `src/utils/logging.ts` | `logging.test.ts` | PASS | — |
 
 ## Build & Configuration
 
@@ -89,6 +89,7 @@ Last updated: 2025-07-17
 | DOC-01 | AGENTS.md project tree matches src/ layout | RTM v1.1 | `AGENTS.md` | CI doc-check | PASS | — |
 | DOC-02 | AGENTS.md testing section matches actual tests | RTM v1.1 | `AGENTS.md` | CI doc-check | PASS | — |
 | DOC-03 | README CDP endpoints match implementation | RTM v1.1 | `README.md` | CI doc-check | PASS | — |
+| DOC-04 | Admin API endpoints in checklist match implementation | RTM v1.1 | `SPEC_CONFORMANCE_CHECKLIST.md` | CI doc-check | PASS | — |
 
 ---
 
@@ -102,5 +103,5 @@ Last updated: 2025-07-17
 | Debug Routes | 5 | 0 | 0 | 5 |
 | Gateway & Env | 4 | 0 | 0 | 4 |
 | Build & Config | 5 | 0 | 0 | 5 |
-| Documentation | 3 | 0 | 0 | 3 |
-| **Total** | **41** | **0** | **0** | **41** |
+| Documentation | 4 | 0 | 0 | 4 |
+| **Total** | **42** | **0** | **0** | **42** |

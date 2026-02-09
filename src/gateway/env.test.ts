@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildEnvVars } from './env';
+import { buildEnvVars, resolveStartupAuthChoice } from './env';
 import { createMockEnv } from '../test-utils';
 
 describe('buildEnvVars', () => {
@@ -271,5 +271,122 @@ describe('buildEnvVars', () => {
       expect(result.CDP_SECRET).toBe('cdp-secret-value');
       expect(result.WORKER_URL).toBe('https://my-worker.workers.dev');
     });
+  });
+});
+
+// ── Startup-level AI Provider Priority (mirrors start-openclaw.sh) ──────────
+// These tests validate the auth-choice that start-openclaw.sh would use
+// when running `openclaw onboard`. The priority chain:
+//   CF Gateway (all 3 vars) > Anthropic > OpenAI > none
+describe('resolveStartupAuthChoice', () => {
+  it('returns "none" when no provider configured', () => {
+    const env = createMockEnv();
+    expect(resolveStartupAuthChoice(env)).toBe('none');
+  });
+
+  // ── Scenario 1: CF Gateway full set ──
+  it('selects CF Gateway when all three CF Gateway vars are present', () => {
+    const env = createMockEnv({
+      CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+      CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+      CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('cloudflare-ai-gateway-api-key');
+  });
+
+  it('CF Gateway wins even when Anthropic and OpenAI are also set', () => {
+    const env = createMockEnv({
+      CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+      CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+      CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+      ANTHROPIC_API_KEY: 'sk-anthro',
+      OPENAI_API_KEY: 'sk-openai',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('cloudflare-ai-gateway-api-key');
+  });
+
+  it('incomplete CF Gateway (missing account ID) falls through', () => {
+    const env = createMockEnv({
+      CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+      // CF_AI_GATEWAY_ACCOUNT_ID missing
+      CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+      ANTHROPIC_API_KEY: 'sk-anthro',
+    });
+    // Falls through to Anthropic
+    expect(resolveStartupAuthChoice(env)).toBe('apiKey');
+  });
+
+  // ── Scenario 2: Anthropic only ──
+  it('selects Anthropic when only Anthropic key is set', () => {
+    const env = createMockEnv({
+      ANTHROPIC_API_KEY: 'sk-anthro',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('apiKey');
+  });
+
+  it('Anthropic wins over OpenAI (priority order)', () => {
+    const env = createMockEnv({
+      ANTHROPIC_API_KEY: 'sk-anthro',
+      OPENAI_API_KEY: 'sk-openai',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('apiKey');
+  });
+
+  // ── Scenario 3: OpenAI only ──
+  it('selects OpenAI when only OpenAI key is set', () => {
+    const env = createMockEnv({
+      OPENAI_API_KEY: 'sk-openai',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('openai-api-key');
+  });
+
+  // ── Scenario 4: Legacy gateway override ──
+  // Legacy AI_GATEWAY_* vars are mapped to ANTHROPIC_API_KEY by buildEnvVars
+  // before the container starts. The startup script then sees ANTHROPIC_API_KEY.
+  it('legacy gateway: buildEnvVars maps to Anthropic, startup picks apiKey', () => {
+    const env = createMockEnv({
+      AI_GATEWAY_API_KEY: 'legacy-key',
+      AI_GATEWAY_BASE_URL: 'https://gateway.example.com/anthropic',
+    });
+    // buildEnvVars transforms legacy → ANTHROPIC_API_KEY
+    const containerEnv = buildEnvVars(env);
+    expect(containerEnv.ANTHROPIC_API_KEY).toBe('legacy-key');
+    expect(containerEnv.ANTHROPIC_BASE_URL).toBe('https://gateway.example.com/anthropic');
+
+    // After buildEnvVars, the container env has ANTHROPIC_API_KEY set,
+    // so resolveStartupAuthChoice (on the container env) would pick 'apiKey'.
+    // We simulate this by creating a mock env with the remapped vars:
+    const containerMockEnv = createMockEnv({
+      ANTHROPIC_API_KEY: containerEnv.ANTHROPIC_API_KEY,
+    });
+    expect(resolveStartupAuthChoice(containerMockEnv)).toBe('apiKey');
+  });
+
+  // ── Consistency: buildEnvVars + resolveStartupAuthChoice agree ──
+  it('consistency: buildEnvVars forwards CF Gateway vars when resolveStartupAuthChoice picks CF Gateway', () => {
+    const env = createMockEnv({
+      CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+      CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+      CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+    });
+    expect(resolveStartupAuthChoice(env)).toBe('cloudflare-ai-gateway-api-key');
+    const vars = buildEnvVars(env);
+    expect(vars.CLOUDFLARE_AI_GATEWAY_API_KEY).toBe('cf-key');
+    expect(vars.CF_AI_GATEWAY_ACCOUNT_ID).toBe('account');
+    expect(vars.CF_AI_GATEWAY_GATEWAY_ID).toBe('gateway');
+  });
+
+  it('consistency: buildEnvVars forwards Anthropic key when resolveStartupAuthChoice picks apiKey', () => {
+    const env = createMockEnv({ ANTHROPIC_API_KEY: 'sk-anthro' });
+    expect(resolveStartupAuthChoice(env)).toBe('apiKey');
+    const vars = buildEnvVars(env);
+    expect(vars.ANTHROPIC_API_KEY).toBe('sk-anthro');
+  });
+
+  it('consistency: buildEnvVars forwards OpenAI key when resolveStartupAuthChoice picks openai-api-key', () => {
+    const env = createMockEnv({ OPENAI_API_KEY: 'sk-openai' });
+    expect(resolveStartupAuthChoice(env)).toBe('openai-api-key');
+    const vars = buildEnvVars(env);
+    expect(vars.OPENAI_API_KEY).toBe('sk-openai');
   });
 });
