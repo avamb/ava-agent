@@ -316,10 +316,12 @@ npm run deploy
 
 | Endpoint | Description |
 |----------|-------------|
+| `WS /cdp` | WebSocket connection for CDP commands (primary endpoint) |
 | `GET /cdp/json/version` | Browser version information |
 | `GET /cdp/json/list` | List available browser targets |
+| `GET /cdp/json` | Alias for `/cdp/json/list` |
 | `GET /cdp/json/new` | Create a new browser target |
-| `WS /cdp/devtools/browser/{id}` | WebSocket connection for CDP commands |
+| `WS /cdp/devtools/browser/{id}` | WebSocket alias for `/cdp` (standard CDP path) |
 
 All endpoints require authentication via the `?secret=<CDP_SECRET>` query parameter.
 

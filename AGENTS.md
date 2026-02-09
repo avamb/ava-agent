@@ -16,27 +16,44 @@ This is a Cloudflare Worker that runs [OpenClaw](https://github.com/openclaw/ope
 
 ```
 src/
-├── index.ts          # Main Hono app, route mounting
-├── types.ts          # TypeScript type definitions
+├── index.ts          # Main Hono app, route mounting, scheduled handler
+├── types.ts          # TypeScript type definitions (MoltbotEnv, AppEnv, JWTPayload)
 ├── config.ts         # Constants (ports, timeouts, paths)
+├── env.d.ts          # Cloudflare module type declarations
+├── assets.d.ts       # Asset import type declarations (.html, .png)
+├── test-utils.ts     # Shared test mocks (createMockEnv, createMockSandbox)
+├── assets/           # HTML templates
+│   ├── loading.html  # Loading page shown while gateway starts
+│   └── config-error.html  # Error page for missing env vars
 ├── auth/             # Cloudflare Access authentication
-│   ├── jwt.ts        # JWT verification
-│   ├── jwks.ts       # JWKS fetching and caching
-│   └── middleware.ts # Hono middleware for auth
+│   ├── index.ts      # Re-exports (verifyAccessJWT, createAccessMiddleware, isDevMode)
+│   ├── jwt.ts        # JWT decoding, verification, JWKS fetching and caching
+│   └── middleware.ts # Hono middleware for auth (CF Access + DEV_MODE bypass)
 ├── gateway/          # OpenClaw gateway management
-│   ├── process.ts    # Process lifecycle (find, start)
-│   ├── env.ts        # Environment variable building
-│   ├── r2.ts         # R2 bucket mounting
-│   ├── sync.ts       # R2 backup sync logic
+│   ├── index.ts      # Re-exports
+│   ├── process.ts    # Process lifecycle (find, start, ensureMoltbotGateway)
+│   ├── env.ts        # Environment variable building (buildEnvVars)
+│   ├── r2.ts         # R2 bucket mounting (mountR2Storage)
+│   ├── sync.ts       # R2 backup sync logic (syncToR2)
 │   └── utils.ts      # Shared utilities (waitForProcess)
+├── utils/            # General utilities
+│   └── logging.ts    # Logging helpers (redactSensitiveParams)
 ├── routes/           # API route handlers
-│   ├── api.ts        # /api/* endpoints (devices, gateway)
-│   ├── admin.ts      # /_admin/* static file serving
-│   └── debug.ts      # /debug/* endpoints
+│   ├── index.ts      # Re-exports all route modules
+│   ├── api.ts        # /api/admin/* endpoints (devices, gateway, storage)
+│   ├── admin-ui.ts   # /_admin/* static file serving + Vite dev passthrough
+│   ├── cdp.ts        # /cdp/* Chrome DevTools Protocol WebSocket shim
+│   ├── debug.ts      # /debug/* endpoints (version, processes, logs, env, config)
+│   └── public.ts     # Public routes (health check, logos, /api/status, admin assets)
 └── client/           # React admin UI (Vite)
-    ├── App.tsx
-    ├── api.ts        # API client
+    ├── App.tsx        # Main app component
+    ├── App.css        # App styles
+    ├── api.ts         # API client for admin endpoints
+    ├── index.css      # Global styles
+    ├── main.tsx       # React entry point
     └── pages/
+        ├── AdminPage.tsx  # Admin dashboard page
+        └── AdminPage.css  # Admin page styles
 ```
 
 ## Key Patterns
@@ -54,7 +71,7 @@ When calling the OpenClaw CLI from the worker, always include `--url ws://localh
 sandbox.startProcess('openclaw devices list --json --url ws://localhost:18789')
 ```
 
-CLI commands take 10-15 seconds due to WebSocket connection overhead. Use `waitForProcess()` helper in `src/routes/api.ts`.
+CLI commands take 10-15 seconds due to WebSocket connection overhead. Use `waitForProcess()` helper from `src/gateway/utils.ts`.
 
 ### Success Detection
 
@@ -80,13 +97,15 @@ npm run typecheck     # TypeScript check
 Tests use Vitest. Test files are colocated with source files (`*.test.ts`).
 
 Current test coverage:
-- `auth/jwt.test.ts` - JWT decoding and validation
-- `auth/jwks.test.ts` - JWKS fetching and caching
-- `auth/middleware.test.ts` - Auth middleware behavior
-- `gateway/env.test.ts` - Environment variable building
-- `gateway/process.test.ts` - Process finding logic
-- `gateway/r2.test.ts` - R2 mounting logic
-- `gateway/sync.test.ts` - R2 backup sync logic
+- `auth/jwt.test.ts` - JWT decoding, validation, and JWKS fetching/caching
+- `auth/middleware.test.ts` - Auth middleware behavior (CF Access, DEV_MODE, E2E_TEST_MODE)
+- `gateway/env.test.ts` - Environment variable building (buildEnvVars)
+- `gateway/process.test.ts` - Process finding logic (findExistingMoltbotProcess)
+- `gateway/r2.test.ts` - R2 mounting logic (mountR2Storage)
+- `gateway/sync.test.ts` - R2 backup sync logic (syncToR2)
+- `logging.test.ts` - Logging utilities (redactSensitiveParams)
+
+Shared test utilities are in `src/test-utils.ts` (mock env, mock sandbox, mock process).
 
 When adding new functionality, add corresponding tests.
 
