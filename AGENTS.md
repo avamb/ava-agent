@@ -99,11 +99,15 @@ Tests use Vitest. Test files are colocated with source files (`*.test.ts`).
 Current test coverage:
 - `auth/jwt.test.ts` - JWT decoding, validation, and JWKS fetching/caching
 - `auth/middleware.test.ts` - Auth middleware behavior (CF Access, DEV_MODE, E2E_TEST_MODE)
-- `gateway/env.test.ts` - Environment variable building (buildEnvVars)
+- `gateway/env.test.ts` - Environment variable building and AI provider priority
 - `gateway/process.test.ts` - Process finding logic (findExistingMoltbotProcess)
 - `gateway/r2.test.ts` - R2 mounting logic (mountR2Storage)
 - `gateway/sync.test.ts` - R2 backup sync logic (syncToR2)
 - `logging.test.ts` - Logging utilities (redactSensitiveParams)
+- `routes/api.test.ts` - Admin API endpoints (devices, storage, gateway)
+- `routes/cdp.test.ts` - CDP auth flows and discovery endpoints
+- `routes/debug.test.ts` - Debug route behavior (version, processes, logs, env, config)
+- `routes/protection-matrix.test.ts` - Route protection matrix (public/protected/secret)
 
 Shared test utilities are in `src/test-utils.ts` (mock env, mock sandbox, mock process).
 
