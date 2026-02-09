@@ -158,4 +158,118 @@ describe('buildEnvVars', () => {
       TELEGRAM_BOT_TOKEN: 'tg',
     });
   });
+
+  // ── AI Provider Priority ──────────────────────────────────────────
+  // Provider precedence for container env:
+  //   CF Gateway > Anthropic > OpenAI
+  //   Legacy AI_GATEWAY_* overrides direct Anthropic key
+  describe('AI provider priority selection', () => {
+    it('passes only Cloudflare AI Gateway vars when only gateway configured', () => {
+      const env = createMockEnv({
+        CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+        CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+        CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+      });
+      const result = buildEnvVars(env);
+      expect(result.CLOUDFLARE_AI_GATEWAY_API_KEY).toBe('cf-key');
+      expect(result.CF_AI_GATEWAY_ACCOUNT_ID).toBe('account');
+      expect(result.CF_AI_GATEWAY_GATEWAY_ID).toBe('gateway');
+      // No Anthropic or OpenAI keys
+      expect(result.ANTHROPIC_API_KEY).toBeUndefined();
+      expect(result.OPENAI_API_KEY).toBeUndefined();
+    });
+
+    it('passes only Anthropic key when only Anthropic configured', () => {
+      const env = createMockEnv({
+        ANTHROPIC_API_KEY: 'sk-anthro',
+      });
+      const result = buildEnvVars(env);
+      expect(result.ANTHROPIC_API_KEY).toBe('sk-anthro');
+      expect(result.OPENAI_API_KEY).toBeUndefined();
+      expect(result.CLOUDFLARE_AI_GATEWAY_API_KEY).toBeUndefined();
+    });
+
+    it('passes only OpenAI key when only OpenAI configured', () => {
+      const env = createMockEnv({
+        OPENAI_API_KEY: 'sk-openai',
+      });
+      const result = buildEnvVars(env);
+      expect(result.OPENAI_API_KEY).toBe('sk-openai');
+      expect(result.ANTHROPIC_API_KEY).toBeUndefined();
+      expect(result.CLOUDFLARE_AI_GATEWAY_API_KEY).toBeUndefined();
+    });
+
+    it('CF Gateway + Anthropic: both keys forwarded (gateway takes precedence at runtime)', () => {
+      const env = createMockEnv({
+        CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+        CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+        CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+        ANTHROPIC_API_KEY: 'sk-anthro',
+      });
+      const result = buildEnvVars(env);
+      // Both forwarded - openclaw runtime uses CF Gateway when present
+      expect(result.CLOUDFLARE_AI_GATEWAY_API_KEY).toBe('cf-key');
+      expect(result.ANTHROPIC_API_KEY).toBe('sk-anthro');
+    });
+
+    it('legacy gateway overrides direct Anthropic key in env vars', () => {
+      const env = createMockEnv({
+        AI_GATEWAY_API_KEY: 'legacy-key',
+        AI_GATEWAY_BASE_URL: 'https://gateway.example.com/anthropic',
+        ANTHROPIC_API_KEY: 'direct-key',
+      });
+      const result = buildEnvVars(env);
+      // Legacy gateway overrides ANTHROPIC_API_KEY
+      expect(result.ANTHROPIC_API_KEY).toBe('legacy-key');
+      expect(result.ANTHROPIC_BASE_URL).toBe('https://gateway.example.com/anthropic');
+    });
+
+    it('legacy gateway requires both key and URL (only key = no override)', () => {
+      const env = createMockEnv({
+        AI_GATEWAY_API_KEY: 'legacy-key',
+        // No AI_GATEWAY_BASE_URL
+        ANTHROPIC_API_KEY: 'direct-key',
+      });
+      const result = buildEnvVars(env);
+      // Without base URL, legacy gateway is not activated
+      expect(result.ANTHROPIC_API_KEY).toBe('direct-key');
+      expect(result.AI_GATEWAY_BASE_URL).toBeUndefined();
+    });
+
+    it('legacy gateway requires both key and URL (only URL = no override)', () => {
+      const env = createMockEnv({
+        AI_GATEWAY_BASE_URL: 'https://gateway.example.com/anthropic',
+        // No AI_GATEWAY_API_KEY
+        ANTHROPIC_API_KEY: 'direct-key',
+      });
+      const result = buildEnvVars(env);
+      // Without API key, legacy gateway is not activated
+      expect(result.ANTHROPIC_API_KEY).toBe('direct-key');
+      expect(result.AI_GATEWAY_BASE_URL).toBeUndefined();
+    });
+
+    it('all providers configured: all keys forwarded', () => {
+      const env = createMockEnv({
+        CLOUDFLARE_AI_GATEWAY_API_KEY: 'cf-key',
+        CF_AI_GATEWAY_ACCOUNT_ID: 'account',
+        CF_AI_GATEWAY_GATEWAY_ID: 'gateway',
+        ANTHROPIC_API_KEY: 'sk-anthro',
+        OPENAI_API_KEY: 'sk-openai',
+      });
+      const result = buildEnvVars(env);
+      expect(result.CLOUDFLARE_AI_GATEWAY_API_KEY).toBe('cf-key');
+      expect(result.ANTHROPIC_API_KEY).toBe('sk-anthro');
+      expect(result.OPENAI_API_KEY).toBe('sk-openai');
+    });
+
+    it('passes CDP_SECRET and WORKER_URL when set', () => {
+      const env = createMockEnv({
+        CDP_SECRET: 'cdp-secret-value',
+        WORKER_URL: 'https://my-worker.workers.dev',
+      });
+      const result = buildEnvVars(env);
+      expect(result.CDP_SECRET).toBe('cdp-secret-value');
+      expect(result.WORKER_URL).toBe('https://my-worker.workers.dev');
+    });
+  });
 });
