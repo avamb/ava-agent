@@ -1,6 +1,6 @@
 import type { Sandbox, Process } from '@cloudflare/sandbox';
 import type { MoltbotEnv } from '../types';
-import { MOLTBOT_PORT, STARTUP_TIMEOUT_MS } from '../config';
+import { MOLTBOT_PORT, STARTUP_TIMEOUT_MS, EXISTING_PROCESS_READY_TIMEOUT_MS } from '../config';
 import { buildEnvVars } from './env';
 import { mountR2Storage } from './r2';
 
@@ -68,12 +68,19 @@ export async function ensureMoltbotGateway(sandbox: Sandbox, env: MoltbotEnv): P
       existingProcess.status,
     );
 
-    // Always use full startup timeout - a process can be "running" but not ready yet
-    // (e.g., just started by another concurrent request). Using a shorter timeout
-    // causes race conditions where we kill processes that are still initializing.
+    // Existing processes can get stuck after rollout or token/auth churn.
+    // Use a shorter check here; if not reachable, kill and start clean.
     try {
-      console.log('Waiting for gateway on port', MOLTBOT_PORT, 'timeout:', STARTUP_TIMEOUT_MS);
-      await existingProcess.waitForPort(MOLTBOT_PORT, { mode: 'tcp', timeout: STARTUP_TIMEOUT_MS });
+      console.log(
+        'Waiting for existing gateway on port',
+        MOLTBOT_PORT,
+        'timeout:',
+        EXISTING_PROCESS_READY_TIMEOUT_MS,
+      );
+      await existingProcess.waitForPort(MOLTBOT_PORT, {
+        mode: 'tcp',
+        timeout: EXISTING_PROCESS_READY_TIMEOUT_MS,
+      });
       console.log('Gateway is reachable');
       return existingProcess;
       // eslint-disable-next-line no-unused-vars

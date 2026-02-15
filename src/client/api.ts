@@ -2,6 +2,8 @@
 // Authentication is handled by Cloudflare Access (JWT in cookies)
 
 const API_BASE = '/api/admin';
+// Admin operations can legitimately take a while (gateway warmup + CLI over websocket).
+const API_TIMEOUT_MS = 120_000;
 
 export interface PendingDevice {
   requestId: string;
@@ -63,14 +65,28 @@ export class AuthError extends Error {
 }
 
 async function apiRequest<T>(path: string, options: globalThis.RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  } as globalThis.RequestInit);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  let response: globalThis.Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      credentials: 'include',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    } as globalThis.RequestInit);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`Request timed out after ${Math.floor(API_TIMEOUT_MS / 1000)}s: ${path}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (response.status === 401) {
     throw new AuthError('Unauthorized - please log in via Cloudflare Access');

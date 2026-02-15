@@ -141,6 +141,52 @@ describe('API admin routes', () => {
       expect(body.raw).toBe('No devices found\n');
     });
 
+    it('parses device list JSON from stderr output', async () => {
+      const devicesJson = JSON.stringify({
+        pending: [{ requestId: 'req-stderr-1', displayName: 'Browser' }],
+        paired: [{ deviceId: 'dev-stderr-1', displayName: 'CLI' }],
+      });
+      const proc = createMockProc({ stdout: '', stderr: devicesJson });
+      const sandbox = createMockSandbox();
+      sandbox.startProcess.mockResolvedValue(proc);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
+
+      const { testApp } = buildApp(sandbox);
+      const res = await testApp.request(
+        '/api/admin/devices',
+        {},
+        { MOLTBOT_GATEWAY_TOKEN: 'token-123' },
+      );
+      expect(res.status).toBe(200);
+
+      const body: any = await res.json();
+      expect(body.pending).toHaveLength(1);
+      expect(body.paired).toHaveLength(1);
+      expect(body.pending[0].requestId).toBe('req-stderr-1');
+    });
+
+    it('parses device JSON embedded in mixed logs', async () => {
+      const mixedOutput = [
+        'Connecting to gateway...',
+        '{"level":"info","msg":"cli preface"}',
+        '{"pending":[{"requestId":"req-mixed-1"}],"paired":[{"deviceId":"dev-mixed-1"}]}',
+        'Done.',
+      ].join('\n');
+      const proc = createMockProc({ stdout: mixedOutput, stderr: '' });
+      const sandbox = createMockSandbox();
+      sandbox.startProcess.mockResolvedValue(proc);
+      vi.mocked(ensureMoltbotGateway).mockResolvedValue(createMockProc() as any);
+
+      const { testApp } = buildApp(sandbox);
+      const res = await testApp.request('/api/admin/devices', {}, { MOLTBOT_GATEWAY_TOKEN: 'tok' });
+      expect(res.status).toBe(200);
+
+      const body: any = await res.json();
+      expect(body.pending).toHaveLength(1);
+      expect(body.paired).toHaveLength(1);
+      expect(body.pending[0].requestId).toBe('req-mixed-1');
+    });
+
     it('returns 500 when gateway fails to start', async () => {
       vi.mocked(ensureMoltbotGateway).mockRejectedValue(new Error('Gateway OOM'));
 
