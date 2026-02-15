@@ -30,7 +30,9 @@ adminUi.get('*', async (c) => {
       if (mountedPath.startsWith(prefix)) {
         // Pass the full original path to ASSETS — in dev mode this routes through
         // Vite's middleware which will serve the transformed module
-        return c.env.ASSETS.fetch(new Request(new URL(url.pathname, url.origin).toString(), c.req.raw));
+        return c.env.ASSETS.fetch(
+          new Request(new URL(url.pathname, url.origin).toString(), c.req.raw),
+        );
       }
     }
   }

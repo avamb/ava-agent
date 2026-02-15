@@ -307,6 +307,61 @@ cdp.get('/json/list', async (c) => {
 });
 
 /**
+ * GET /json/new - Create a new browser target
+ *
+ * Creates a new browser target and returns its info with a WebSocket URL.
+ * Compatible with the standard CDP discovery protocol used by tools like Puppeteer.
+ * Authentication: Pass secret as query param `?secret=<CDP_SECRET>`
+ */
+cdp.get('/json/new', async (c) => {
+  // Verify secret from query param
+  const url = new URL(c.req.url);
+  const providedSecret = url.searchParams.get('secret');
+  const expectedSecret = c.env.CDP_SECRET;
+
+  if (!expectedSecret) {
+    return c.json(
+      {
+        error: 'CDP endpoint not configured',
+        hint: 'Set CDP_SECRET via: wrangler secret put CDP_SECRET',
+      },
+      503,
+    );
+  }
+
+  if (!providedSecret || !timingSafeEqual(providedSecret, expectedSecret)) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  if (!c.env.BROWSER) {
+    return c.json(
+      {
+        error: 'Browser Rendering not configured',
+        hint: 'Add browser binding to wrangler.jsonc',
+      },
+      503,
+    );
+  }
+
+  // Build the WebSocket URL
+  const wsProtocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${url.host}/cdp?secret=${encodeURIComponent(providedSecret)}`;
+
+  // Generate a new target ID
+  const targetId = crypto.randomUUID();
+
+  return c.json({
+    description: '',
+    devtoolsFrontendUrl: '',
+    id: targetId,
+    title: 'New Tab',
+    type: 'page',
+    url: 'about:blank',
+    webSocketDebuggerUrl: wsUrl,
+  });
+});
+
+/**
  * GET /json - Alias for /json/list (some clients use this)
  */
 cdp.get('/json', async (c) => {
@@ -357,6 +412,70 @@ cdp.get('/json', async (c) => {
       webSocketDebuggerUrl: wsUrl,
     },
   ]);
+});
+
+/**
+ * GET /devtools/browser/:id - WebSocket alias for /cdp
+ *
+ * Standard Chrome DevTools Protocol path used by many CDP clients.
+ * Behaves identically to GET /cdp (WebSocket upgrade with ?secret= auth).
+ */
+cdp.get('/devtools/browser/:id', async (c) => {
+  // Check for WebSocket upgrade
+  const upgradeHeader = c.req.header('Upgrade');
+  if (upgradeHeader?.toLowerCase() !== 'websocket') {
+    return c.json({
+      error: 'WebSocket upgrade required',
+      hint: 'Connect via WebSocket: ws://host/cdp/devtools/browser/{id}?secret=<CDP_SECRET>',
+    });
+  }
+
+  // Verify secret from query param
+  const url = new URL(c.req.url);
+  const providedSecret = url.searchParams.get('secret');
+  const expectedSecret = c.env.CDP_SECRET;
+
+  if (!expectedSecret) {
+    return c.json(
+      {
+        error: 'CDP endpoint not configured',
+        hint: 'Set CDP_SECRET via: wrangler secret put CDP_SECRET',
+      },
+      503,
+    );
+  }
+
+  if (!providedSecret || !timingSafeEqual(providedSecret, expectedSecret)) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  if (!c.env.BROWSER) {
+    return c.json(
+      {
+        error: 'Browser Rendering not configured',
+        hint: 'Add browser binding to wrangler.jsonc',
+      },
+      503,
+    );
+  }
+
+  // Create WebSocket pair
+  const webSocketPair = new WebSocketPair();
+  const [client, server] = Object.values(webSocketPair);
+
+  // Accept the WebSocket
+  server.accept();
+
+  // Initialize CDP session asynchronously
+  initCDPSession(server, c.env).catch((err) => {
+    console.error('[CDP] Failed to initialize session:', err);
+    server.close(1011, 'Failed to initialize browser session');
+  });
+
+  return new Response(null, {
+    status: 101,
+    webSocket: client,
+  });
 });
 
 /**

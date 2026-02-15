@@ -35,6 +35,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Check documentation consistency
+        run: bash scripts/check-doc-links.sh
+
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 20

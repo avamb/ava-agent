@@ -8,6 +8,12 @@ export const MOLTBOT_PORT = 18789;
 /** Maximum time to wait for Moltbot to start (3 minutes) */
 export const STARTUP_TIMEOUT_MS = 180_000;
 
+/**
+ * When an existing process is already running, do a shorter readiness check.
+ * If it's not reachable quickly, kill it and do a clean restart.
+ */
+export const EXISTING_PROCESS_READY_TIMEOUT_MS = 25_000;
+
 /** Mount path for R2 persistent storage inside the container */
 export const R2_MOUNT_PATH = '/data/moltbot';
 

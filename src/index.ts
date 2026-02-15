@@ -114,6 +114,10 @@ function buildSandboxOptions(env: MoltbotEnv): SandboxOptions {
   return { sleepAfter };
 }
 
+function getSandboxInstanceKey(env: MoltbotEnv): string {
+  return env.SANDBOX_INSTANCE_KEY?.trim() || 'moltbot';
+}
+
 // Main app
 const app = new Hono<AppEnv>();
 
@@ -135,7 +139,7 @@ app.use('*', async (c, next) => {
 // Middleware: Initialize sandbox for all requests
 app.use('*', async (c, next) => {
   const options = buildSandboxOptions(c.env);
-  const sandbox = getSandbox(c.env.Sandbox, 'moltbot', options);
+  const sandbox = getSandbox(c.env.Sandbox, getSandboxInstanceKey(c.env), options);
   c.set('sandbox', sandbox);
   await next();
 });
@@ -454,7 +458,7 @@ async function scheduled(
   _ctx: ExecutionContext,
 ): Promise<void> {
   const options = buildSandboxOptions(env);
-  const sandbox = getSandbox(env.Sandbox, 'moltbot', options);
+  const sandbox = getSandbox(env.Sandbox, getSandboxInstanceKey(env), options);
 
   const gatewayProcess = await findExistingMoltbotProcess(sandbox);
   if (!gatewayProcess) {
